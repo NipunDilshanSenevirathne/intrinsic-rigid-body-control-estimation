@@ -1,3 +1,7 @@
+---
+usemathjax: true
+---
+
 # 🌀 Intrinsic Rigid-Body PID Control, Extended Kalman Filter, and Symmetric Systems on Lie Groups
 
 This repository compiles a series of interactive notebooks and Python simulations covering:
