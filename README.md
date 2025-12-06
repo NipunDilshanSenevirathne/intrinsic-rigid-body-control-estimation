@@ -46,7 +46,7 @@ The control law lifts the classical PID structure for a double integrator to a L
 Key components include:
 
 * **Right-invariant configuration error**
-  $ e = g_r g^{-1} $, capturing configuration mismatch.
+  $e = g_r g^{-1}$, capturing configuration mismatch.
 * **Momentum-based error dynamics**
   Linearized in the cotangent (momentum) space.
 * **Geometric integral term**
