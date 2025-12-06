@@ -1,8 +1,3 @@
-Here’s a polished, **GitHub-ready version of your `README.md`**, complete with improved structure, formatting, grammar, and a new section summarizing **symmetric systems on Lie groups**.
-It preserves your mathematical rigor while making it clearer and more readable to researchers and practitioners browsing your repo.
-
----
-
 # 🌀 Intrinsic Rigid-Body PID Control, Extended Kalman Filter, and Symmetric Systems on Lie Groups
 
 This repository compiles a series of interactive notebooks and Python simulations covering:
@@ -42,7 +37,7 @@ The controller operates in **momentum space**, enabling coordinate-free trajecto
 
 ### ✒️ Controller Overview
 
-The control law lifts the classical PID structure for a double integrator to a Lie group ( G ).
+The control law lifts the classical PID structure for a double integrator to a Lie group $G$.
 Key components include:
 
 * **Right-invariant configuration error**
@@ -50,9 +45,9 @@ Key components include:
 * **Momentum-based error dynamics**
   Linearized in the cotangent (momentum) space.
 * **Geometric integral term**
-  Defined intrinsically on ( G ), ensuring coordinate independence.
+  Defined intrinsically on $G$, ensuring coordinate independence.
 * **Morse-type error function**
-  Ensures almost-global stability on compact Lie groups such as ( SO(3) ).
+  Ensures almost-global stability on compact Lie groups such as $SO(3)$.
 
 ---
 
@@ -70,7 +65,7 @@ It:
 
 ### 🌍 Almost-Global Convergence
 
-Due to topological constraints (e.g., non-contractibility of ( SO(3) )), smooth controllers cannot achieve global asymptotic stability.
+Due to topological constraints (e.g., non-contractibility of $SO(3)$), smooth controllers cannot achieve global asymptotic stability.
 However, this controller attains **AGLE** behavior:
 
 * Desired configuration is asymptotically stable from almost all initial conditions.
@@ -81,27 +76,29 @@ However, this controller attains **AGLE** behavior:
 
 ### 🧮 Right–Invariant Dynamics and Control Law
 
-The momentum-space dynamics of a mechanical system on a Lie group ( G ) are:
+The momentum-space dynamics of a mechanical system on a Lie group $G$ are:
 
-[
+$$
 \dot{g} = \omega \cdot g, \quad \dot{\pi} = f^e + f^u,
-]
-with ( \pi = \mathrm{Ad}*g^* \mathbb{I} \mathrm{Ad}*{g^{-1}}\omega ).
-Using the right-invariant error ( e = g_r g^{-1} ), we define the **momentum error**:
+$$
 
-[
+with $\pi = \mathrm{Ad}*g^* \mathbb{I} \mathrm{Ad}*{g^{-1}}\omega$.
+Using the right-invariant error $e = g_r g^{-1}$, we define the **momentum error**:
+
+$$
 \pi_e = \mathrm{Ad}_{e^{-1}}^* \pi_r - \pi.
-]
+$$
 
 The AGLES–PID control law is then:
 
-[
+$$
 f^u =
 \left(\mathrm{Ad}*{e^{-1}}^*\dot{\pi}*r + \mathrm{ad}*{\omega_e}^*\mathrm{Ad}*{e^{-1}}^*\pi_r - f^e\right)
 
 * k_p\pi_e - k_d\pi_e - k_I\pi_I,
-  ]
-  with integral error ( \dot{\pi}_I = \pi_e ).
+  $$
+
+with integral error $\dot{\pi}_I = \pi_e$.
 
 The resulting closed-loop dynamics are linear in the momentum errors.
 
@@ -117,29 +114,32 @@ The resulting closed-loop dynamics are linear in the momentum errors.
 
 ## 🔄 Symmetric Systems and Lie Group Reduction
 
-Many mechanical systems exhibit **symmetries** — invariances under the smooth action of a Lie group ( H ) on a configuration space ( G ).
-Such systems can be **reduced** via symmetry to a lower-dimensional quotient manifold ( G/H ), simplifying analysis and control.
+Many mechanical systems exhibit **symmetries** — invariances under the smooth action of a Lie group $H$ on a configuration space $G$.
+Such systems can be **reduced** via symmetry to a lower-dimensional quotient manifold $G/H$, simplifying analysis and control.
 
 ### 🧩 Key Concepts
 
 * **Principal bundle:**
-  ( H \hookrightarrow G \xrightarrow{\pi} G/H ), where ( G/H ) is the reduced (shape) space.
+  $H \hookrightarrow G \xrightarrow{\pi} G/H$, where $G/H$ is the reduced (shape) space.
 
 * **Connection:**
   A smooth distribution that defines horizontal and vertical motions — separating “shape change” from “internal rotation”.
 
 * **Reduction:**
-  Dynamics on ( G ) project to reduced equations on ( G/H ) via the connection, leading to elegant geometric interpretations such as **holonomy** and **geometric phase**.
+  Dynamics on $G$ project to reduced equations on $G/H$ via the connection, leading to elegant geometric interpretations such as **holonomy** and **geometric phase**.
 
-### ⚙️ Example — ( SO(3) \to S^2 )
+---
 
-In the rotation group ( SO(3) ) with right ( SO(2) )-symmetry about a fixed axis:
-[
+### ⚙️ Example — $SO(3) \to S^2$
+
+In the rotation group $SO(3)$ with right $SO(2)$-symmetry about a fixed axis:
+
+$$
 SO(2) \hookrightarrow SO(3) \xrightarrow{\pi} S^2, \quad \pi(R) = Re_3.
-]
+$$
 
-The base variable ( r = Re_3 ) represents the body’s symmetry axis on the sphere, while the fibre variable corresponds to spin about it.
-When ( r(t) ) completes a closed loop on ( S^2 ), the total attitude ( R(t) ) accumulates a **geometric phase** — equal to the negative solid angle subtended by the loop.
+The base variable $r = Re_3$ represents the body’s symmetry axis on the sphere, while the fibre variable corresponds to spin about it.
+When $r(t)$ completes a closed loop on $S^2$, the total attitude $R(t)$ accumulates a **geometric phase** — equal to the negative solid angle subtended by the loop.
 
 This geometric structure underlies phenomena like **precession**, **Berry phase**, and **Hannay–Berry holonomy** in mechanics.
 
@@ -149,13 +149,15 @@ This geometric structure underlies phenomena like **precession**, **Berry phase*
 
 **Notebook:** [Rigid Body Intrinsic EKF](https://github.com/mugalan/intrinsic-rigid-body-control-estimation/blob/main/intrinsic-DEKF/RigidBodyIntinsicEKF_DHSM.ipynb)
 
-The DEKF provides an **intrinsic, structure-preserving state estimator** for systems evolving on Lie groups (e.g., ( SO(3) )).
+The DEKF provides an **intrinsic, structure-preserving state estimator** for systems evolving on Lie groups (e.g., $SO(3)$).
 Unlike standard EKFs, it maintains **group consistency**, ensuring unbiased and stable performance.
+
+---
 
 ### 🧠 Highlights
 
 * Derived directly from **Lie algebra error dynamics**.
-* Works for **attitude and pose estimation** on ( SO(3) ) and ( SE(3) ).
+* Works for **attitude and pose estimation** on $SO(3)$ and $SE(3)$.
 * Uses **invariant linearization** — prediction and correction equations remain consistent regardless of the reference frame.
 * Demonstrated through Monte Carlo simulation with IMU-style measurements.
 
@@ -190,7 +192,3 @@ Ideal for researchers working in:
 ## 🔖 License
 
 MIT License © 2025 D.H.S. Maithripala
-
----
-
-Would you like me to generate a **short abstract version (150–200 words)** for your GitHub repo description and “About” sidebar? It would summarize the repo for quick visibility on GitHub.
