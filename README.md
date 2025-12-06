@@ -111,6 +111,7 @@ The resulting closed-loop dynamics are linear in the momentum errors.
 ---
 
 ## 🔄 Symmetric Systems and Lie Group Reduction
+**Notebook:** [Symmetric Kinematic Systems](https://github.com/mugalan/intrinsic-rigid-body-control-estimation/blob/main/symmetric-systems/kinematic_systems_on_symmetric_spaces.ipynb)
 
 Many mechanical systems exhibit **symmetries** — invariances under the smooth action of a Lie group $H$ on a configuration space $G$.
 Such systems can be **reduced** via symmetry to a lower-dimensional quotient manifold $G/H$, simplifying analysis and control.
