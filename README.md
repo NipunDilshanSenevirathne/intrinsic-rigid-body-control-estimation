@@ -1,4 +1,4 @@
-# Intrinsic rigid-body PID Control and Extended Kalman Filter
+# Intrinsic rigid-body PID Control, Extended Kalman Filter, and Symmetric systems on Lie Groups
 
 This is a compilation of a set of interactive notes and supplementary material for intrinsic PID control and DEKF for rigid body motion.
 
