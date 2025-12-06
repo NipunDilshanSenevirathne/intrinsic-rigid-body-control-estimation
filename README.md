@@ -1,6 +1,6 @@
 # Intrinsic rigid-body PID Control, Extended Kalman Filter, and Symmetric systems on Lie Groups
 
-This is a compilation of a set of interactive notes and supplementary material for intrinsic PID control and DEKF for rigid body motion.
+This is a compilation of a set of interactive notes and supplementary material for intrinsic PID control, DEKF and Symmetric systems on LIe groups with application to rigid body motion.
 
 As a supplement the following repo contains a Lie-Group oriented treatment of classical mechanics and a set of python tools for simulating roigid body motion and the DEKF.
 
