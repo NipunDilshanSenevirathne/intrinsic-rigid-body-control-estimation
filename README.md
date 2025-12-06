@@ -65,7 +65,7 @@ It:
 
 ### 🌍 Almost-Global Convergence
 
-Due to topological constraints (e.g., non-contractibility of $SO(3)$), smooth controllers cannot achieve global asymptotic stability.
+Due to topological constraints (e.g., non-contractibility of $SO(3)$ ), smooth controllers cannot achieve global asymptotic stability.
 However, this controller attains **AGLE** behavior:
 
 * Desired configuration is asymptotically stable from almost all initial conditions.
@@ -93,7 +93,7 @@ The AGLES–PID control law is then:
 
 $$
 f^u =
-\left(\mathrm{Ad}_{e^{-1}}^*\dot{\pi}_r + \mathrm{ad}_{\omega_e}^*\mathrm{Ad}_{e^{-1}}^*\pi_r - f^e\right)-k_p\pi_e - k_d\pi_e - k_I\pi_I,
+\left(\mathrm{Ad}_{e^{-1}}^\star\dot{\pi}_r + \mathrm{ad}_{\omega_e}^\star\mathrm{Ad}_{e^{-1}}^\star\pi_r - f^e\right)-k_p\pi_e - k_d\pi_e - k_I\pi_I,
 $$
 
 with integral error $\dot{\pi}_I = \pi_e$.
