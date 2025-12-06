@@ -93,7 +93,7 @@ The AGLES–PID control law is then:
 
 $$
 f^u =
-\left(\mathrm{Ad}*{e^{-1}}^*\dot{\pi}*r + \mathrm{ad}*{\omega_e}^*\mathrm{Ad}*{e^{-1}}^*\pi_r - f^e\right)-k_p\pi_e - k_d\pi_e - k_I\pi_I,
+\left(\mathrm{Ad}_{e^{-1}}^*\dot{\pi}_r + \mathrm{ad}_{\omega_e}^*\mathrm{Ad}_{e^{-1}}^*\pi_r - f^e\right)-k_p\pi_e - k_d\pi_e - k_I\pi_I,
 $$
 
 with integral error $\dot{\pi}_I = \pi_e$.
