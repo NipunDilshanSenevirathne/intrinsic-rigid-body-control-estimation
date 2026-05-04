@@ -86,7 +86,7 @@ ESP32                     BNO055
                         └────────┘
 ```
 
-> ⚠️ **Never** connect BNO055 VIN to ESP32 **5V** — the BNO055 Adafruit breakout is 3.3 V logic. The onboard regulator accepts 3.3 V–5 V input on VIN, so 3V3 is fine and safest.
+
 
 ---
 
