@@ -8,6 +8,10 @@ Mathematical foundation: [mugalan/intrinsic-rigid-body-control-estimation](https
 
 ---
 
+
+https://github.com/user-attachments/assets/f9c29ae0-30af-488f-aa10-670c9ccf6277
+
+
 ## 📋 Table of Contents
 
 1. [System Overview](#system-overview)
