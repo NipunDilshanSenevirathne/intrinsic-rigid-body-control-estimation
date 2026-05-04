@@ -1,4 +1,4 @@
-# 🌀 Intrinsic Rigid-Body IMU Dashboard
+# Intrinsic Rigid-Body IMU Dashboard
 
 **Author:** Dinuja Karunarathne
 
