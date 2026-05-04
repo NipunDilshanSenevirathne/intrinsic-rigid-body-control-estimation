@@ -1,0 +1,741 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Intrinsic Rigid-Body IMU Dashboard</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+  /* ── Reset & Base ── */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg:       #0a0e1a;
+    --panel:    #111827;
+    --border:   #1e2d45;
+    --accent:   #00d4ff;
+    --accent2:  #7c3aed;
+    --accent3:  #10b981;
+    --warn:     #f59e0b;
+    --danger:   #ef4444;
+    --text:     #e2e8f0;
+    --muted:    #64748b;
+    --glow:     0 0 18px rgba(0,212,255,.35);
+    --glow2:    0 0 18px rgba(124,58,237,.35);
+  }
+  html { font-size: 14px; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ── Header ── */
+  header {
+    background: linear-gradient(135deg, #0d1525 0%, #111827 100%);
+    border-bottom: 1px solid var(--border);
+    padding: 0 24px;
+    height: 64px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .logo { display: flex; align-items: center; gap: 12px; }
+  .logo-icon {
+    width: 36px; height: 36px;
+    border: 2px solid var(--accent);
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px;
+    box-shadow: var(--glow);
+  }
+  .logo-text { font-size: 1.1rem; font-weight: 700; color: var(--accent); letter-spacing: .5px; }
+  .logo-sub  { font-size: .7rem; color: var(--muted); letter-spacing: 1px; text-transform: uppercase; }
+  .header-right { display: flex; align-items: center; gap: 16px; }
+  .ws-badge {
+    display: flex; align-items: center; gap: 8px;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 6px 14px;
+    font-size: .8rem;
+  }
+  .dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--danger);
+    transition: background .3s;
+  }
+  .dot.connected { background: var(--accent3); box-shadow: 0 0 8px var(--accent3); }
+  .ws-input {
+    background: transparent;
+    border: none;
+    color: var(--text);
+    font-size: .8rem;
+    width: 200px;
+    outline: none;
+  }
+  .btn {
+    padding: 6px 16px;
+    border-radius: 6px;
+    border: 1px solid var(--accent);
+    background: transparent;
+    color: var(--accent);
+    cursor: pointer;
+    font-size: .8rem;
+    transition: all .2s;
+  }
+  .btn:hover { background: rgba(0,212,255,.1); box-shadow: var(--glow); }
+  .author-badge {
+    font-size: .72rem;
+    color: var(--muted);
+    letter-spacing: .5px;
+  }
+
+  /* ── Layout ── */
+  .main { padding: 20px 24px; display: grid; gap: 16px; }
+  .row  { display: grid; gap: 16px; }
+  .row-4 { grid-template-columns: repeat(4, 1fr); }
+  .row-3 { grid-template-columns: repeat(3, 1fr); }
+  .row-2 { grid-template-columns: repeat(2, 1fr); }
+  .row-2-1 { grid-template-columns: 2fr 1fr; }
+  .row-1-2 { grid-template-columns: 1fr 2fr; }
+
+  /* ── Panel ── */
+  .panel {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 16px;
+    position: relative;
+    overflow: hidden;
+  }
+  .panel::before {
+    content: '';
+    position: absolute; top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+  }
+  .panel.accent2::before { background: linear-gradient(90deg, var(--accent2), var(--accent3)); }
+  .panel.accent3::before { background: linear-gradient(90deg, var(--accent3), var(--accent)); }
+  .panel.warn::before   { background: linear-gradient(90deg, var(--warn), var(--accent)); }
+
+  .panel-title {
+    font-size: .7rem;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .panel-title span { font-size: 14px; }
+
+  /* ── KPI cards ── */
+  .kpi-val {
+    font-size: 2.2rem;
+    font-weight: 800;
+    letter-spacing: -1px;
+    line-height: 1;
+    color: var(--accent);
+  }
+  .kpi-unit { font-size: .75rem; color: var(--muted); margin-top: 4px; }
+  .kpi-label { font-size: .7rem; letter-spacing: 1px; text-transform: uppercase; color: var(--muted); }
+
+  /* ── Gauge ── */
+  .gauge-wrap { position: relative; width: 100%; padding-top: 55%; }
+  .gauge-canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
+  .gauge-val {
+    position: absolute; bottom: 4px; left: 50%;
+    transform: translateX(-50%);
+    font-size: 1.4rem; font-weight: 800; color: var(--accent);
+    text-align: center;
+  }
+
+  /* ── SO(3) Matrix ── */
+  .matrix-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 4px;
+    font-family: monospace;
+  }
+  .matrix-cell {
+    background: rgba(0,212,255,.05);
+    border: 1px solid rgba(0,212,255,.15);
+    border-radius: 4px;
+    padding: 6px 4px;
+    text-align: center;
+    font-size: .8rem;
+    transition: background .3s;
+    color: var(--accent);
+  }
+  .matrix-cell.negative { color: #f87171; }
+
+  /* ── 3D cube ── */
+  #cube-wrap {
+    display: flex; align-items: center; justify-content: center;
+    height: 180px;
+  }
+  .scene {
+    width: 100px; height: 100px;
+    perspective: 400px;
+  }
+  .cube {
+    width: 100%; height: 100%;
+    position: relative;
+    transform-style: preserve-3d;
+    transform: rotateX(0deg) rotateY(0deg) rotateZ(0deg);
+    transition: transform 0.08s linear;
+  }
+  .face {
+    position: absolute;
+    width: 100px; height: 100px;
+    border: 2px solid rgba(0,212,255,.6);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px; font-weight: 700;
+    letter-spacing: 1px;
+    backdrop-filter: blur(2px);
+  }
+  .face.front  { background: rgba(0,212,255,.08); transform: translateZ(50px); color: var(--accent); }
+  .face.back   { background: rgba(124,58,237,.08); transform: rotateY(180deg) translateZ(50px); color: var(--accent2); }
+  .face.left   { background: rgba(16,185,129,.08); transform: rotateY(-90deg) translateZ(50px); color: var(--accent3); }
+  .face.right  { background: rgba(245,158,11,.08); transform: rotateY(90deg) translateZ(50px); color: var(--warn); }
+  .face.top    { background: rgba(0,212,255,.05); transform: rotateX(90deg) translateZ(50px); color: var(--accent); }
+  .face.bottom { background: rgba(124,58,237,.05); transform: rotateX(-90deg) translateZ(50px); color: var(--accent2); }
+
+  /* ── Calibration ── */
+  .cal-row { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+  .cal-label { width: 50px; font-size: .75rem; color: var(--muted); }
+  .cal-bar-wrap { flex: 1; height: 8px; background: rgba(255,255,255,.06); border-radius: 4px; overflow: hidden; }
+  .cal-bar { height: 100%; border-radius: 4px; transition: width .4s; background: var(--danger); }
+  .cal-bar.c1 { background: #ef4444; }
+  .cal-bar.c2 { background: #f59e0b; }
+  .cal-bar.c3 { background: #3b82f6; }
+  .cal-bar.c4 { background: var(--accent3); }
+  .cal-num { width: 24px; text-align: right; font-size: .75rem; color: var(--text); }
+
+  /* ── Math equation display ── */
+  .eq-box {
+    background: rgba(0,0,0,.3);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-family: monospace;
+    font-size: .75rem;
+    color: var(--accent);
+    line-height: 1.8;
+    white-space: pre;
+    overflow-x: auto;
+  }
+
+  /* ── Status bar ── */
+  .status-bar {
+    display: flex; gap: 20px; align-items: center;
+    font-size: .72rem; color: var(--muted);
+    padding: 8px 0 0;
+  }
+  .status-item { display: flex; gap: 6px; align-items: center; }
+  .status-item b { color: var(--text); }
+
+  /* ── Alert banner ── */
+  #alert-banner {
+    display: none;
+    background: rgba(239,68,68,.15);
+    border: 1px solid var(--danger);
+    border-radius: 8px;
+    padding: 10px 16px;
+    font-size: .8rem;
+    color: #fca5a5;
+    margin-bottom: 8px;
+  }
+
+  /* ── Charts ── */
+  .chart-wrap { position: relative; height: 160px; }
+
+  /* ── Footer ── */
+  footer {
+    text-align: center;
+    padding: 20px;
+    font-size: .72rem;
+    color: var(--muted);
+    border-top: 1px solid var(--border);
+    margin-top: 8px;
+  }
+  footer a { color: var(--accent); text-decoration: none; }
+
+  /* ── Responsive ── */
+  @media (max-width: 1200px) {
+    .row-4 { grid-template-columns: repeat(2,1fr); }
+    .row-2-1, .row-1-2 { grid-template-columns: 1fr; }
+  }
+  @media (max-width: 700px) {
+    .row-3, .row-2, .row-4 { grid-template-columns: 1fr; }
+    .main { padding: 12px; }
+  }
+
+  /* ── Shake animation ── */
+  @keyframes shake-ring {
+    0%,100% { box-shadow: 0 0 0 0 rgba(0,212,255,.4); }
+    50%      { box-shadow: 0 0 0 12px rgba(0,212,255,.0); }
+  }
+  .shaking { animation: shake-ring .3s ease-out; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <div class="logo-icon">🌀</div>
+    <div>
+      <div class="logo-text">Intrinsic Rigid-Body IMU</div>
+      <div class="logo-sub">SO(3) · AGLES-PID · DEKF · Lie Groups</div>
+    </div>
+  </div>
+  <div class="header-right">
+    <div class="ws-badge">
+      <div class="dot" id="dot"></div>
+      <span id="ws-status">Disconnected</span>
+      &nbsp;|&nbsp;
+      <input class="ws-input" id="ws-url" value="ws://192.168.1.100:81" placeholder="ws://IP:81">
+    </div>
+    <button class="btn" onclick="toggleConnect()">Connect</button>
+    <div class="author-badge">Author: Dinuja Karunarathne</div>
+  </div>
+</header>
+
+<div class="main">
+  <!-- Alert -->
+  <div id="alert-banner">⚠️ <span id="alert-msg"></span></div>
+
+  <!-- Row 1: KPI cards -->
+  <div class="row row-4">
+    <div class="panel" id="card-roll">
+      <div class="panel-title"><span>🔄</span> Roll (φ)</div>
+      <div class="kpi-val" id="kv-roll">—</div>
+      <div class="kpi-unit">degrees</div>
+    </div>
+    <div class="panel accent2" id="card-pitch">
+      <div class="panel-title"><span>↕️</span> Pitch (θ)</div>
+      <div class="kpi-val" id="kv-pitch" style="color:var(--accent2)">—</div>
+      <div class="kpi-unit">degrees</div>
+    </div>
+    <div class="panel accent3" id="card-yaw">
+      <div class="panel-title"><span>🧭</span> Yaw (ψ)</div>
+      <div class="kpi-val" id="kv-yaw" style="color:var(--accent3)">—</div>
+      <div class="kpi-unit">degrees</div>
+    </div>
+    <div class="panel warn" id="card-conf">
+      <div class="panel-title"><span>⚙️</span> Config Error e(R)</div>
+      <div class="kpi-val" id="kv-econf" style="color:var(--warn)">—</div>
+      <div class="kpi-unit">Ψ(e) = (3 − tr R) / 2  ∈ [0, 2]</div>
+    </div>
+  </div>
+
+  <!-- Row 2: 3D cube | Euler chart | SO(3) matrix -->
+  <div class="row row-3">
+    <!-- 3D Cube -->
+    <div class="panel">
+      <div class="panel-title"><span>🎲</span> Live 3D Orientation (CSS SO(3))</div>
+      <div id="cube-wrap">
+        <div class="scene">
+          <div class="cube" id="cube">
+            <div class="face front">FRONT</div>
+            <div class="face back">BACK</div>
+            <div class="face left">LEFT</div>
+            <div class="face right">RIGHT</div>
+            <div class="face top">TOP</div>
+            <div class="face bottom">BTM</div>
+          </div>
+        </div>
+      </div>
+      <div class="status-bar">
+        <div class="status-item">Rate: <b id="stat-hz">— Hz</b></div>
+        <div class="status-item">|ω|: <b id="stat-pi">—</b> rad/s</div>
+        <div class="status-item">Pkts: <b id="stat-pkts">0</b></div>
+      </div>
+    </div>
+
+    <!-- Euler chart -->
+    <div class="panel">
+      <div class="panel-title"><span>📈</span> Euler Angles — Roll / Pitch / Yaw</div>
+      <div class="chart-wrap">
+        <canvas id="chart-euler"></canvas>
+      </div>
+    </div>
+
+    <!-- SO(3) matrix -->
+    <div class="panel">
+      <div class="panel-title"><span>🧮</span> SO(3) Rotation Matrix R ∈ SO(3)</div>
+      <div class="matrix-grid" id="mat-R">
+        <div class="matrix-cell" id="R00">—</div><div class="matrix-cell" id="R01">—</div><div class="matrix-cell" id="R02">—</div>
+        <div class="matrix-cell" id="R10">—</div><div class="matrix-cell" id="R11">—</div><div class="matrix-cell" id="R12">—</div>
+        <div class="matrix-cell" id="R20">—</div><div class="matrix-cell" id="R21">—</div><div class="matrix-cell" id="R22">—</div>
+      </div>
+      <div style="margin-top:10px">
+        <div class="panel-title" style="margin-bottom:6px"><span>🔢</span> Quaternion q = (w, x, y, z)</div>
+        <div style="display:flex;gap:8px;">
+          <div style="flex:1;text-align:center">
+            <div style="font-size:.65rem;color:var(--muted)">w</div>
+            <div id="q-w" style="font-size:.9rem;color:var(--accent);font-family:monospace">—</div>
+          </div>
+          <div style="flex:1;text-align:center">
+            <div style="font-size:.65rem;color:var(--muted)">x</div>
+            <div id="q-x" style="font-size:.9rem;color:var(--accent2);font-family:monospace">—</div>
+          </div>
+          <div style="flex:1;text-align:center">
+            <div style="font-size:.65rem;color:var(--muted)">y</div>
+            <div id="q-y" style="font-size:.9rem;color:var(--accent3);font-family:monospace">—</div>
+          </div>
+          <div style="flex:1;text-align:center">
+            <div style="font-size:.65rem;color:var(--muted)">z</div>
+            <div id="q-z" style="font-size:.9rem;color:var(--warn);font-family:monospace">—</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Row 3: Angular velocity | Acceleration | Gravity -->
+  <div class="row row-3">
+    <div class="panel">
+      <div class="panel-title"><span>🌀</span> Angular Velocity ω (Lie Algebra so(3))</div>
+      <div class="chart-wrap">
+        <canvas id="chart-gyro"></canvas>
+      </div>
+    </div>
+    <div class="panel accent2">
+      <div class="panel-title"><span>⚡</span> Linear Acceleration (m/s²)</div>
+      <div class="chart-wrap">
+        <canvas id="chart-accel"></canvas>
+      </div>
+    </div>
+    <div class="panel accent3">
+      <div class="panel-title"><span>🌍</span> Gravity Vector g (body frame)</div>
+      <div class="chart-wrap">
+        <canvas id="chart-grav"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- Row 4: Momentum | Config error | Calibration | Math -->
+  <div class="row row-2">
+    <!-- Momentum & config error -->
+    <div class="panel">
+      <div class="panel-title"><span>📐</span> Geometric Scalars — Momentum & Config Error</div>
+      <div class="chart-wrap" style="height:140px">
+        <canvas id="chart-geo"></canvas>
+      </div>
+      <div class="eq-box" style="margin-top:10px">
+π_e = Ad†_{e⁻¹} π_r − π       (momentum error)
+e_conf = (3 − tr(R)) / 2       (Morse-type Ψ ∈ [0,2])
+ṡhake → |π| ↑,  Ψ → 1–2
+      </div>
+    </div>
+
+    <!-- Calibration + EKF info -->
+    <div class="panel">
+      <div class="panel-title"><span>🎯</span> BNO055 Calibration Status</div>
+      <div class="cal-row">
+        <div class="cal-label">System</div>
+        <div class="cal-bar-wrap"><div class="cal-bar" id="cal-sys" style="width:0%"></div></div>
+        <div class="cal-num" id="cal-sys-n">0</div>
+      </div>
+      <div class="cal-row">
+        <div class="cal-label">Gyro</div>
+        <div class="cal-bar-wrap"><div class="cal-bar" id="cal-gyro" style="width:0%"></div></div>
+        <div class="cal-num" id="cal-gyro-n">0</div>
+      </div>
+      <div class="cal-row">
+        <div class="cal-label">Accel</div>
+        <div class="cal-bar-wrap"><div class="cal-bar" id="cal-accel" style="width:0%"></div></div>
+        <div class="cal-num" id="cal-accel-n">0</div>
+      </div>
+      <div class="cal-row">
+        <div class="cal-label">Mag</div>
+        <div class="cal-bar-wrap"><div class="cal-bar" id="cal-mag" style="width:0%"></div></div>
+        <div class="cal-num" id="cal-mag-n">0</div>
+      </div>
+
+      <div class="panel-title" style="margin-top:14px"><span>🔭</span> AGLES-PID Controller — Theory Summary</div>
+      <div class="eq-box">
+ġ = ω · g          (kinematics on SO(3))
+π̇ = fᵉ + fᵘ        (momentum dynamics)
+e = gᵣ g⁻¹         (right-invariant config error)
+fᵘ = Ad†_{e⁻¹}π̇ᵣ + ad†_ωₑ Ad†_{e⁻¹}πᵣ
+     − fᵉ − kₚπₑ − k_d π̇ₑ − k_I πᵢ
+      </div>
+    </div>
+  </div>
+
+  <!-- Row 5: Full Shake Detector -->
+  <div class="row">
+    <div class="panel warn">
+      <div class="panel-title"><span>📳</span> Shake Event Detector — Momentum Threshold Analysis</div>
+      <div style="display:flex;gap:20px;align-items:center;flex-wrap:wrap">
+        <div>
+          <div class="kpi-val" id="shake-count" style="color:var(--warn)">0</div>
+          <div class="kpi-unit">Shakes detected</div>
+        </div>
+        <div style="flex:1;min-width:200px">
+          <div style="display:flex;justify-content:space-between;font-size:.72rem;color:var(--muted);margin-bottom:4px">
+            <span>Momentum |π|</span>
+            <span id="pi-val-text">0.00 rad/s</span>
+          </div>
+          <div style="height:14px;background:rgba(255,255,255,.06);border-radius:7px;overflow:hidden">
+            <div id="pi-bar" style="height:100%;width:0%;background:linear-gradient(90deg,var(--accent3),var(--warn),var(--danger));border-radius:7px;transition:width .1s"></div>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:.68rem;color:var(--muted);margin-top:3px">
+            <span>0</span><span>Threshold: 2 rad/s</span><span>10</span>
+          </div>
+        </div>
+        <div>
+          <div class="kpi-val" id="last-shake" style="color:var(--accent);font-size:1rem">—</div>
+          <div class="kpi-unit">Last shake time</div>
+        </div>
+        <div>
+          <div class="kpi-val" id="conf-err-big" style="color:var(--warn)">—</div>
+          <div class="kpi-unit">Config error Ψ(e)</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<footer>
+  <div>
+    Intrinsic Rigid-Body IMU Dashboard &nbsp;·&nbsp;
+    Author: <strong>Dinuja Karunarathne</strong> &nbsp;·&nbsp;
+    Math basis: <a href="https://github.com/mugalan/intrinsic-rigid-body-control-estimation" target="_blank">
+      mugalan/intrinsic-rigid-body-control-estimation
+    </a> &nbsp;·&nbsp;
+    Controller: D.H.S. Maithripala — AGLES-PID on Lie Groups (Automatica 2015)
+  </div>
+  <div style="margin-top:6px;color:#374151">
+    SO(3) · DEKF · Geometric Mechanics · University of Peradeniya Reference
+  </div>
+</footer>
+
+<script>
+'use strict';
+
+// ── Chart helpers ────────────────────────────────────────────
+const MAX_PTS = 120;
+
+function mkChart(id, labels, colors) {
+  const ctx = document.getElementById(id).getContext('2d');
+  return new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: Array(MAX_PTS).fill(''),
+      datasets: labels.map((l, i) => ({
+        label: l,
+        data: Array(MAX_PTS).fill(null),
+        borderColor: colors[i],
+        backgroundColor: colors[i] + '18',
+        borderWidth: 1.5,
+        pointRadius: 0,
+        tension: 0.3,
+        fill: false,
+      }))
+    },
+    options: {
+      animation: false,
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: {
+          labels: { color: '#94a3b8', boxWidth: 10, font: { size: 10 } }
+        },
+      },
+      scales: {
+        x: { display: false },
+        y: {
+          grid: { color: 'rgba(255,255,255,.05)' },
+          ticks: { color: '#64748b', font: { size: 10 } }
+        }
+      }
+    }
+  });
+}
+
+function pushData(chart, ...vals) {
+  chart.data.datasets.forEach((ds, i) => {
+    ds.data.push(vals[i]);
+    if (ds.data.length > MAX_PTS) ds.data.shift();
+  });
+  chart.data.labels.push('');
+  if (chart.data.labels.length > MAX_PTS) chart.data.labels.shift();
+  chart.update('none');
+}
+
+// ── Initialise charts ────────────────────────────────────────
+const cEuler = mkChart('chart-euler',
+  ['Roll φ','Pitch θ','Yaw ψ'],
+  ['#00d4ff','#7c3aed','#10b981']);
+
+const cGyro = mkChart('chart-gyro',
+  ['ωₓ','ωᵧ','ω_z'],
+  ['#f87171','#fbbf24','#a78bfa']);
+
+const cAccel = mkChart('chart-accel',
+  ['aₓ','aᵧ','a_z'],
+  ['#00d4ff','#7c3aed','#10b981']);
+
+const cGrav = mkChart('chart-grav',
+  ['gₓ','gᵧ','g_z'],
+  ['#f59e0b','#ef4444','#3b82f6']);
+
+const cGeo = mkChart('chart-geo',
+  ['|π| (momentum)','Ψ(e) (config err)'],
+  ['#00d4ff','#f59e0b']);
+
+// ── WebSocket ────────────────────────────────────────────────
+let ws = null, connected = false, pktCount = 0;
+let lastPktTime = Date.now(), hzSmooth = 0;
+let shakeCount = 0, lastShakeTs = null;
+const SHAKE_THRESH = 2.0; // rad/s
+let inShake = false;
+
+function toggleConnect() {
+  if (connected) {
+    ws && ws.close();
+  } else {
+    const url = document.getElementById('ws-url').value.trim();
+    connect(url);
+  }
+}
+
+function connect(url) {
+  try {
+    ws = new WebSocket(url);
+    ws.onopen = () => {
+      connected = true;
+      document.getElementById('dot').classList.add('connected');
+      document.getElementById('ws-status').textContent = 'Connected';
+      document.getElementById('alert-banner').style.display = 'none';
+    };
+    ws.onmessage = e => handleMsg(JSON.parse(e.data));
+    ws.onerror = () => showAlert('WebSocket error — check the IP/port');
+    ws.onclose = () => {
+      connected = false;
+      document.getElementById('dot').classList.remove('connected');
+      document.getElementById('ws-status').textContent = 'Disconnected';
+    };
+  } catch(ex) {
+    showAlert('Invalid WebSocket URL: ' + ex.message);
+  }
+}
+
+function showAlert(msg) {
+  document.getElementById('alert-banner').style.display = 'block';
+  document.getElementById('alert-msg').textContent = msg;
+}
+
+// ── Process incoming packet ───────────────────────────────────
+function handleMsg(d) {
+  pktCount++;
+  const now = Date.now();
+  const dt = (now - lastPktTime) / 1000;
+  lastPktTime = now;
+  hzSmooth = hzSmooth * 0.85 + (1 / Math.max(dt, 0.001)) * 0.15;
+
+  // ── KPI cards
+  setText('kv-roll',  d.euler.roll.toFixed(1));
+  setText('kv-pitch', d.euler.pitch.toFixed(1));
+  setText('kv-yaw',   d.euler.yaw.toFixed(1));
+  setText('kv-econf', d.e_conf.toFixed(3));
+  setText('conf-err-big', d.e_conf.toFixed(3));
+
+  // ── Quaternion
+  setText('q-w', d.q.w.toFixed(4));
+  setText('q-x', d.q.x.toFixed(4));
+  setText('q-y', d.q.y.toFixed(4));
+  setText('q-z', d.q.z.toFixed(4));
+
+  // ── SO(3) matrix
+  const labels = ['R00','R01','R02','R10','R11','R12','R20','R21','R22'];
+  d.R.forEach((v, i) => {
+    const el = document.getElementById(labels[i]);
+    el.textContent = v.toFixed(3);
+    el.className = 'matrix-cell' + (v < 0 ? ' negative' : '');
+  });
+
+  // ── 3D CSS cube rotation
+  // Convert SO(3) matrix to CSS 3D matrix3d
+  const R = d.R;
+  const mat = `matrix3d(
+    ${R[0]},${R[3]},${-R[6]},0,
+    ${-R[1]},${-R[4]},${R[7]},0,
+    ${R[2]},${R[5]},${-R[8]},0,
+    0,0,0,1)`;
+  document.getElementById('cube').style.transform = mat;
+
+  // ── Charts
+  pushData(cEuler, d.euler.roll, d.euler.pitch, d.euler.yaw);
+  pushData(cGyro,  d.omega.x, d.omega.y, d.omega.z);
+  pushData(cAccel, d.accel.x, d.accel.y, d.accel.z);
+  pushData(cGrav,  d.gravity.x, d.gravity.y, d.gravity.z);
+  pushData(cGeo,   d.pi_mag, d.e_conf);
+
+  // ── Status bar
+  setText('stat-hz',   hzSmooth.toFixed(1) + ' Hz');
+  setText('stat-pi',   d.pi_mag.toFixed(2));
+  setText('stat-pkts', pktCount);
+
+  // ── Shake detection
+  const pct = Math.min(d.pi_mag / 10, 1) * 100;
+  document.getElementById('pi-bar').style.width = pct + '%';
+  setText('pi-val-text', d.pi_mag.toFixed(2) + ' rad/s');
+
+  if (d.pi_mag > SHAKE_THRESH && !inShake) {
+    inShake = true;
+    shakeCount++;
+    lastShakeTs = new Date().toLocaleTimeString();
+    setText('shake-count', shakeCount);
+    setText('last-shake', lastShakeTs);
+    triggerShakeUI();
+  } else if (d.pi_mag <= SHAKE_THRESH * 0.6) {
+    inShake = false;
+  }
+
+  // ── Calibration bars
+  updateCal('sys',   d.cal.sys);
+  updateCal('gyro',  d.cal.gyro);
+  updateCal('accel', d.cal.accel);
+  updateCal('mag',   d.cal.mag);
+}
+
+function setText(id, val) {
+  const el = document.getElementById(id);
+  if (el) el.textContent = val;
+}
+
+function updateCal(key, val) {
+  const bar = document.getElementById('cal-' + key);
+  const num = document.getElementById('cal-' + key + '-n');
+  if (!bar) return;
+  const pct = (val / 3) * 100;
+  bar.style.width = pct + '%';
+  const cls = ['c1','c2','c3','c4'][val] || 'c1';
+  bar.className = 'cal-bar ' + cls;
+  num.textContent = val;
+}
+
+function triggerShakeUI() {
+  // Flash KPI cards
+  ['card-roll','card-pitch','card-yaw','card-conf'].forEach(id => {
+    const el = document.getElementById(id);
+    el.classList.add('shaking');
+    setTimeout(() => el.classList.remove('shaking'), 400);
+  });
+}
+</script>
+</body>
+</html>
